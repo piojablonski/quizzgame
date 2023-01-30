@@ -8,13 +8,14 @@ import (
 )
 
 func TestDisplayQuestions(t *testing.T) {
-	t.Run("asks one question", func(t *testing.T) {
-		out := bytes.Buffer{}
-		board.DisplayQuestion(&out)
+	t.Run("asks one question and reads an answer and displays new question if it is correct", func(t *testing.T) {
+		var out bytes.Buffer
 
-		got := out.String()
-		want := "what is 2+2?"
+		in := bytes.NewBufferString("4")
+		board.DisplayQuestion(in, &out)
 
-		assert.Equal(t, want, got, "want a question %q, got %q", want, got)
+		got2 := out.String()
+		want2 := "what is 2+2?4"
+		assert.Equal(t, want2, got2, "want a question with answer %q, got %q", want2, got2)
 	})
 }
