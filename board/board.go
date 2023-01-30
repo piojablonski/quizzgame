@@ -19,11 +19,18 @@ var Questions = []struct {
 func DisplayQuestion(in io.Reader, out io.Writer) {
 	var answer string
 	var scanner = bufio.NewScanner(in)
+	correctAnswers := 0
 	for _, q := range Questions {
 		fmt.Fprintf(out, "what is %s?", q.Question)
 		answer = waitForMessage(scanner, answer)
+
+		if answer == q.Answer {
+			correctAnswers++
+		}
+
 		fmt.Fprintln(out, answer)
 	}
+	fmt.Fprintf(out, "total questions: %d, correct answers: %d. Bravo!", len(Questions), correctAnswers)
 }
 
 func waitForMessage(scanner *bufio.Scanner, answer string) string {

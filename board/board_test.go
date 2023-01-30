@@ -43,4 +43,21 @@ func TestDisplayQuestions(t *testing.T) {
 			})
 		}
 	})
+
+	t.Run("asks many questions and display summary", func(t *testing.T) {
+		var out bytes.Buffer
+		questions := board.Questions
+
+		in := bytes.Buffer{}
+		fmt.Fprintln(&in, questions[0].Answer)
+		fmt.Fprintln(&in, "wrong or incorrect")
+		fmt.Fprintln(&in, questions[2].Answer)
+		board.DisplayQuestion(&in, &out)
+
+		got := out.String()
+		want := "total questions: 3, correct answers: 2. Bravo!"
+
+		assert.Contains(t, got, want, "it should contain summary with propoer counts")
+
+	})
 }
