@@ -1,7 +1,7 @@
 package main
 
 import (
-	board "github.com/piojablonski/quizzgame"
+	"github.com/piojablonski/quizzgame/board"
 	"os"
 )
 
