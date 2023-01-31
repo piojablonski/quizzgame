@@ -2,25 +2,43 @@ package board
 
 import (
 	"bufio"
+	"encoding/csv"
 	"fmt"
 	"io"
 	"log"
 )
 
-var Questions = []struct {
+type Question struct {
 	Question string
 	Answer   string
-}{
-	{"2+2", "4"},
-	{"2+3", "5"},
-	{"2+4", "6"},
 }
 
-func DisplayQuestion(in io.Reader, out io.Writer) {
+type Board struct {
+	Questions []Question
+}
+
+func New(file io.Reader) *Board {
+	b := Board{}
+	csvReader := csv.NewReader(file)
+
+	for {
+		record, err := csvReader.Read()
+		if err == io.EOF {
+			break
+		}
+		if err != nil {
+			log.Fatalf("problem parsing csv, %v", err)
+		}
+		b.Questions = append(b.Questions, Question{record[0], record[1]})
+	}
+	return &b
+}
+
+func (b *Board) DisplayQuestion(in io.Reader, out io.Writer) {
 	var answer string
 	var scanner = bufio.NewScanner(in)
 	correctAnswers := 0
-	for _, q := range Questions {
+	for _, q := range b.Questions {
 		fmt.Fprintf(out, "what is %s?", q.Question)
 		answer = waitForMessage(scanner, answer)
 
@@ -30,7 +48,7 @@ func DisplayQuestion(in io.Reader, out io.Writer) {
 
 		fmt.Fprintln(out, answer)
 	}
-	fmt.Fprintf(out, "total questions: %d, correct answers: %d. Bravo!", len(Questions), correctAnswers)
+	fmt.Fprintf(out, "total questions: %d, correct answers: %d. Bravo!", len(b.Questions), correctAnswers)
 }
 
 func waitForMessage(scanner *bufio.Scanner, answer string) string {

@@ -5,30 +5,53 @@ import (
 	"fmt"
 	"github.com/piojablonski/quizzgame/board"
 	"github.com/stretchr/testify/assert"
+	"strings"
 	"testing"
 )
 
-func TestDisplayQuestions(t *testing.T) {
+var questions = []board.Question{
+	{"2+2", "4"},
+	{"2+3", "5"},
+	{"2+4", "6"},
+}
+
+const csvContent = `2+2,4
+2+3,5
+2+4,6
+`
+
+func TestInitialization(t *testing.T) {
+
+	file := strings.NewReader(csvContent)
+	b := board.New(file)
+	assert.EqualValues(t, questions, b.Questions)
+}
+
+func TestDisplayingQuestions(t *testing.T) {
 	t.Run("asks one question and reads an answer and displays new question if it is correct", func(t *testing.T) {
+		b := board.Board{Questions: questions[:1]}
+
 		var out bytes.Buffer
 
 		in := bytes.NewBufferString("4")
-		board.DisplayQuestion(in, &out)
+		b.DisplayQuestion(in, &out)
 
-		got2 := out.String()
-		want2 := "what is 2+2?4"
-		assert.Equal(t, want2, got2, "want a question with answer %q, got %q", want2, got2)
+		got := out.String()
+		want := "what is 2+2?4"
+		assert.Contains(t, got, want, "want a question with answer %q, got %q", want, got)
 	})
 
 	t.Run("asks many questions and reads an answer for each", func(t *testing.T) {
+		b := board.Board{questions}
+
 		var out bytes.Buffer
-		questions := board.Questions
+		questions := b.Questions
 
 		in := bytes.Buffer{}
 		for _, q := range questions {
 			fmt.Fprintln(&in, q.Answer)
 		}
-		board.DisplayQuestion(&in, &out)
+		b.DisplayQuestion(&in, &out)
 
 		for i, q := range questions {
 			t.Run(fmt.Sprintf("question %d should contain q&a", i+1), func(t *testing.T) {
@@ -45,14 +68,15 @@ func TestDisplayQuestions(t *testing.T) {
 	})
 
 	t.Run("asks many questions and display summary", func(t *testing.T) {
+		b := board.Board{questions}
+
 		var out bytes.Buffer
-		questions := board.Questions
 
 		in := bytes.Buffer{}
 		fmt.Fprintln(&in, questions[0].Answer)
 		fmt.Fprintln(&in, "wrong or incorrect")
 		fmt.Fprintln(&in, questions[2].Answer)
-		board.DisplayQuestion(&in, &out)
+		b.DisplayQuestion(&in, &out)
 
 		got := out.String()
 		want := "total questions: 3, correct answers: 2. Bravo!"
