@@ -34,21 +34,28 @@ func New(file io.Reader) *Board {
 	return &b
 }
 
-func (b *Board) DisplayQuestion(in io.Reader, out io.Writer) {
+func (b *Board) DisplayQuestion(in io.Reader, out io.Writer) error {
 	var answer string
 	var scanner = bufio.NewScanner(in)
 	correctAnswers := 0
 	for _, q := range b.Questions {
-		fmt.Fprintf(out, "what is %s?", q.Question)
+		if _, err := fmt.Fprintf(out, "what is %s?", q.Question); err != nil {
+			return err
+		}
 		answer = waitForMessage(scanner, answer)
 
 		if answer == q.Answer {
 			correctAnswers++
 		}
 
-		fmt.Fprintln(out, answer)
+		if _, err := fmt.Fprintln(out, answer); err != nil {
+			return err
+		}
 	}
-	fmt.Fprintf(out, "total questions: %d, correct answers: %d. Bravo!", len(b.Questions), correctAnswers)
+	if _, err := fmt.Fprintf(out, "total questions: %d, correct answers: %d. Bravo!", len(b.Questions), correctAnswers); err != nil {
+		return err
+	}
+	return nil
 }
 
 func waitForMessage(scanner *bufio.Scanner, answer string) string {

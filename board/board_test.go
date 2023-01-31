@@ -34,7 +34,8 @@ func TestDisplayingQuestions(t *testing.T) {
 		var out bytes.Buffer
 
 		in := bytes.NewBufferString("4")
-		b.DisplayQuestion(in, &out)
+		err := b.DisplayQuestion(in, &out)
+		assert.NoError(t, err)
 
 		got := out.String()
 		want := "what is 2+2?4"
@@ -51,7 +52,8 @@ func TestDisplayingQuestions(t *testing.T) {
 		for _, q := range questions {
 			fmt.Fprintln(&in, q.Answer)
 		}
-		b.DisplayQuestion(&in, &out)
+		err := b.DisplayQuestion(&in, &out)
+		assert.NoError(t, err)
 
 		for i, q := range questions {
 			t.Run(fmt.Sprintf("question %d should contain q&a", i+1), func(t *testing.T) {
@@ -76,7 +78,8 @@ func TestDisplayingQuestions(t *testing.T) {
 		fmt.Fprintln(&in, questions[0].Answer)
 		fmt.Fprintln(&in, "wrong or incorrect")
 		fmt.Fprintln(&in, questions[2].Answer)
-		b.DisplayQuestion(&in, &out)
+		err := b.DisplayQuestion(&in, &out)
+		assert.NoError(t, err)
 
 		got := out.String()
 		want := "total questions: 3, correct answers: 2. Bravo!"
