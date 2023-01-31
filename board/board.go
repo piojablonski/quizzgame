@@ -34,10 +34,16 @@ func New(file io.Reader) *Board {
 	return &b
 }
 
+const (
+	WelcomePrompt = "Click enter to start a quizz:\n\n"
+)
+
 func (b *Board) DisplayQuestion(in io.Reader, out io.Writer) error {
 	var answer string
 	var scanner = bufio.NewScanner(in)
 	correctAnswers := 0
+	fmt.Fprint(out, WelcomePrompt)
+	waitForMessage(scanner, answer)
 	for _, q := range b.Questions {
 		if _, err := fmt.Fprintf(out, "what is %s?", q.Question); err != nil {
 			return err

@@ -21,19 +21,41 @@ const csvContent = `2+2,4
 `
 
 func TestInitialization(t *testing.T) {
-
 	file := strings.NewReader(csvContent)
 	b := board.New(file)
 	assert.EqualValues(t, questions, b.Questions)
 }
 
+func assertOutputContains(t *testing.T, buffer fmt.Stringer, msgs ...string) {
+	t.Helper()
+	got := buffer.String()
+
+	for _, m := range msgs {
+		assert.Contains(t, got, m)
+	}
+}
+
 func TestDisplayingQuestions(t *testing.T) {
+	t.Run("contains start game prompt and shows the first question after user presses enter", func(t *testing.T) {
+		b := board.Board{Questions: questions[:1]}
+
+		var out bytes.Buffer
+
+		in := bytes.NewBufferString("\n")
+		err := b.DisplayQuestion(in, &out)
+		assert.NoError(t, err)
+
+		wantQuestion := "what is 2+2?"
+		assertOutputContains(t, &out, board.WelcomePrompt, wantQuestion)
+
+	})
+
 	t.Run("asks one question and reads an answer and displays new question if it is correct", func(t *testing.T) {
 		b := board.Board{Questions: questions[:1]}
 
 		var out bytes.Buffer
 
-		in := bytes.NewBufferString("4")
+		in := bytes.NewBufferString("\n4")
 		err := b.DisplayQuestion(in, &out)
 		assert.NoError(t, err)
 
@@ -49,6 +71,7 @@ func TestDisplayingQuestions(t *testing.T) {
 		questions := b.Questions
 
 		in := bytes.Buffer{}
+		fmt.Fprintln(&in, "")
 		for _, q := range questions {
 			fmt.Fprintln(&in, q.Answer)
 		}
@@ -57,14 +80,7 @@ func TestDisplayingQuestions(t *testing.T) {
 
 		for i, q := range questions {
 			t.Run(fmt.Sprintf("question %d should contain q&a", i+1), func(t *testing.T) {
-				got := out.String()
-
-				wantQuestion := q.Question
-				assert.Contains(t, got, wantQuestion, "output %q should contain %q", got, wantQuestion)
-
-				wantAnswer := q.Answer
-				assert.Contains(t, got, wantAnswer, "output %q should contain %q", got, wantQuestion)
-
+				assertOutputContains(t, &out, q.Question, q.Answer)
 			})
 		}
 	})
@@ -75,16 +91,16 @@ func TestDisplayingQuestions(t *testing.T) {
 		var out bytes.Buffer
 
 		in := bytes.Buffer{}
+		fmt.Fprintln(&in, "")
 		fmt.Fprintln(&in, questions[0].Answer)
 		fmt.Fprintln(&in, "wrong or incorrect")
 		fmt.Fprintln(&in, questions[2].Answer)
 		err := b.DisplayQuestion(&in, &out)
 		assert.NoError(t, err)
 
-		got := out.String()
 		want := "total questions: 3, correct answers: 2. Bravo!"
 
-		assert.Contains(t, got, want, "it should contain summary with propoer counts")
+		assertOutputContains(t, &out, want)
 
 	})
 }
