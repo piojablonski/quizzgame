@@ -13,12 +13,17 @@ type Question struct {
 	Answer   string
 }
 
-type Board struct {
-	Questions []Question
+type AutoFinisher interface {
+	SetTimeout()
 }
 
-func New(file io.Reader) *Board {
-	b := Board{}
+type Board struct {
+	Questions []Question
+	Finisher  AutoFinisher
+}
+
+func New(file io.Reader, finisher AutoFinisher) *Board {
+	b := Board{Finisher: finisher}
 	csvReader := csv.NewReader(file)
 
 	for {
@@ -44,6 +49,7 @@ func (b *Board) DisplayQuestion(in io.Reader, out io.Writer) error {
 	correctAnswers := 0
 	fmt.Fprint(out, WelcomePrompt)
 	waitForMessage(scanner, answer)
+	b.Finisher.SetTimeout()
 	for _, q := range b.Questions {
 		if _, err := fmt.Fprintf(out, "what is %s?", q.Question); err != nil {
 			return err

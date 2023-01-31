@@ -20,9 +20,16 @@ const csvContent = `2+2,4
 2+4,6
 `
 
+type DummyFinisher struct {
+}
+
+func (a *DummyFinisher) SetTimeout() {
+}
+
 func TestInitialization(t *testing.T) {
+
 	file := strings.NewReader(csvContent)
-	b := board.New(file)
+	b := board.New(file, &DummyFinisher{})
 	assert.EqualValues(t, questions, b.Questions)
 }
 
@@ -35,10 +42,14 @@ func assertOutputContains(t *testing.T, buffer fmt.Stringer, msgs ...string) {
 	}
 }
 
+func createBoard(csvContent string, finisher board.AutoFinisher) *board.Board {
+	b := board.New(strings.NewReader(csvContent), finisher)
+	return b
+}
+
 func TestDisplayingQuestions(t *testing.T) {
 	t.Run("contains start game prompt and shows the first question after user presses enter", func(t *testing.T) {
-		b := board.Board{Questions: questions[:1]}
-
+		b := createBoard("2+2,4", &DummyFinisher{})
 		var out bytes.Buffer
 
 		in := bytes.NewBufferString("\n")
@@ -51,7 +62,7 @@ func TestDisplayingQuestions(t *testing.T) {
 	})
 
 	t.Run("asks one question and reads an answer and displays new question if it is correct", func(t *testing.T) {
-		b := board.Board{Questions: questions[:1]}
+		b := createBoard("2+2,4", &DummyFinisher{})
 
 		var out bytes.Buffer
 
@@ -65,7 +76,7 @@ func TestDisplayingQuestions(t *testing.T) {
 	})
 
 	t.Run("asks many questions and reads an answer for each", func(t *testing.T) {
-		b := board.Board{questions}
+		b := createBoard(csvContent, &DummyFinisher{})
 
 		var out bytes.Buffer
 		questions := b.Questions
@@ -86,7 +97,7 @@ func TestDisplayingQuestions(t *testing.T) {
 	})
 
 	t.Run("asks many questions and display summary", func(t *testing.T) {
-		b := board.Board{questions}
+		b := createBoard(csvContent, &DummyFinisher{})
 
 		var out bytes.Buffer
 
@@ -103,4 +114,33 @@ func TestDisplayingQuestions(t *testing.T) {
 		assertOutputContains(t, &out, want)
 
 	})
+}
+
+type SpyAutoFinisher struct {
+	IsTimeoutSet bool
+}
+
+func (a *SpyAutoFinisher) SetTimeout() {
+	a.IsTimeoutSet = true
+}
+
+func TestTimeout(t *testing.T) {
+	t.Run("timeout should be scheduled after clicking enter", func(t *testing.T) {
+		finisher := &SpyAutoFinisher{}
+		b := createBoard(csvContent, finisher)
+		var out bytes.Buffer
+		in := bytes.NewBufferString("\n")
+		err := b.DisplayQuestion(in, &out)
+		assert.NoError(t, err)
+		assert.True(t, finisher.IsTimeoutSet)
+	})
+	//t.Run("timeout should not be scheduled before clicking enter", func(t *testing.T) {
+	//	finisher := SpyAutoFinisher{}
+	//	b := board.New(strings.NewReader(csvContent), &finisher)
+	//	var out bytes.Buffer
+	//	in := bytes.NewBufferString("")
+	//	err := b.DisplayQuestion(in, &out)
+	//	assert.NoError(t, err)
+	//	assert.False(t, finisher.IsTimeoutSet)
+	//})
 }
